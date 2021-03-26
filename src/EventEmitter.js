@@ -58,16 +58,16 @@ export default function EventEmitter() {
    * Emit an event to all subscribed listeners.
    *
    * @param {String} name Event name
-   * @param {Mixed} payload Optional event payload
+   * @param {...*} payload Optional event payload
    */
-  function emit(name, payload) {
+  function emit(name, ...payload) {
     if (!name || typeof name !== 'string') {
       throw new Error('Missing listener name');
     }
 
     Object.values(listeners[name] || {}).forEach((listener) => {
       if (typeof listener === 'function') {
-        listener(payload);
+        listener(...payload);
       }
     });
   }

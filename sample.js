@@ -151,13 +151,13 @@ function Hero(props) {
   );
 }
 
-async function initializeContent({ setContext, singletons }) {
+async function initializeContent({ setState, singletons }) {
   try {
     const content = await singletons('fetch')('...', { ... });
-    setContext('content', content);
+    setState('content', content);
   } catch (error) {
     singletons('reportError')(error);
-    setContext('content.hasFailedToLoad', true);
+    setState('content.hasFailedToLoad', true);
   }
 }
 
@@ -167,3 +167,10 @@ async function handleCtaClick({ consume, emit }) {
     emit('@package-modal/trigger', { type: 'signup', ... });
   });
 }
+
+// Something else to think about...
+// "dependsOn" --> key in the hook argument
+// Can have a system that listens for a `dependsOn` event
+// Does the data fetch and sets the context
+//
+// Also need to work through the setup api, systems client vs ssr, systems threads (webworkers)?

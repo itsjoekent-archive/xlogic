@@ -1,0 +1,1 @@
+- [ ] Test core.js functions currently built out

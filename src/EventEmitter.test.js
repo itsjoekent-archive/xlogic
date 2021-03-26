@@ -54,6 +54,14 @@ describe('EventEmitter', () => {
     expect(listener).toHaveBeenCalledWith({ foo: 'bar' });
   });
 
+  it('Adds a listener and recieves an event payload with many arguments', () => {
+    const listener = jest.fn();
+    const emitter = new EventEmitter();
+    emitter.addListener('test', listener);
+    emitter.emit('test', { foo: 'bar' }, 1);
+    expect(listener).toHaveBeenCalledWith({ foo: 'bar' }, 1);
+  });
+
   it('Single event calls multiple listeners', () => {
     const listeners = [
       jest.fn(),
