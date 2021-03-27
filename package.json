@@ -51,6 +51,10 @@
     "dist"
   ],
   "dependencies": {
-    "nanoid": "^3.1.22"
+    "clone-deep": "^4.0.1",
+    "deep-diff": "^1.0.2",
+    "get-value": "^2.0.6",
+    "nanoid": "^3.1.22",
+    "set-value": "^2.0.1"
   }
 }

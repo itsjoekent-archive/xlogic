@@ -13,6 +13,7 @@ describe('EventEmitter', () => {
 
   it('Does not accept a listener missing a name', () => {
     const emitter = new EventEmitter();
+    expect(() => emitter.addListener('', () => {})).toThrow();
     expect(() => emitter.addListener(null, () => {})).toThrow();
     expect(() => emitter.addListener(true, () => {})).toThrow();
     expect(() => emitter.addListener(1, () => {})).toThrow();
@@ -34,6 +35,7 @@ describe('EventEmitter', () => {
   it('Does not accept an event missing a name', () => {
     const emitter = new EventEmitter();
     expect(() => emitter.emit()).toThrow();
+    expect(() => emitter.emit('')).toThrow();
     expect(() => emitter.emit(null)).toThrow();
     expect(() => emitter.emit(true)).toThrow();
   });

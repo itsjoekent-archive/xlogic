@@ -1,3 +1,8 @@
+import get from 'get-value';
+import set from 'set-value';
+import deepdiff from 'deep-diff';
+import clonedeep from 'clone-deep';
+import { nanoid } from 'nanoid';
 import EventEmitter from './EventEmitter';
 
 /**
@@ -26,7 +31,6 @@ export default function core(initialState = {}) {
    *
    * `path` is a dot-notation string that represents the portion
    * of the context that if changed, should triger the event listener.
-   * The path can either be specific or use a wildcard ("*").
    *
    * Listener is called with two parameters,
    *  value<any>, signature<String>
@@ -44,7 +48,7 @@ export default function core(initialState = {}) {
    * @return {String}
    */
   function listenForContextChange(path, listener) {
-    return contextEventEmitter.addListener(path, id, listener);
+    return contextEventEmitter.addListener(path, listener);
   }
 
   /**
@@ -81,7 +85,7 @@ export default function core(initialState = {}) {
    * Add action event listeners within a system.
    * Will remove the listener if the system is removed.
    *
-   * @param {String} name Name of the event to subscribe too
+   * @param {String} name Name of the event to subscribe too (dot notation)
    * @param {Function} handler Event handler
    */
   function addSystemListener(systemId, name, handler) {
@@ -159,7 +163,6 @@ export default function core(initialState = {}) {
 
     const system = systems[id];
     if (!system) {
-      console.warn(`Asked to remove system "${id}" which does not exist`);
       return;
     }
 
@@ -182,26 +185,86 @@ export default function core(initialState = {}) {
   */
   function emit(type, name, ...payload) {
     switch (type) {
-      case 'state': stateEventEmitter.emit(name, ...payload); return;
+      case 'context': contextEventEmitter.emit(name, ...payload); return;
       case 'actions': actionsEventEmitter.emit(name, ...payload); return;
       default: console.warn(`Invalid emit() type argument, "${type}"`); return;
     }
   }
 
-  function emitStateChange(path, value) {
-    emit('state', name, ...payload);
+  /**
+   * ## Internal library function ##
+   * -----------------------
+   *
+   * Emit a context changed event.
+   *
+   * @param {String} path Context path
+   * @param {*} value Updated context value for this path
+   */
+  function emitContextChange(path, signature, value) {
+    emit('context', path, signature, value);
   }
 
+  /**
+   * Emit an application event
+   *
+   * @param {String} name Event name
+   * @param {...*} payload Event payload
+   */
   function emitAction(name, ...payload) {
     emit('actions', name, ...payload);
   }
 
-  function setContext() {
+  /**
+   * Set the application context.
+   * For best performance, be as specific as possible in the path.
+   * Use multiple setContext calls if necessary.
+   *
+   * @param {String} path Dot-notation path of the context to access
+   * @param {Function} setter Callback function that is given the context at this given path,
+   *                          expected to return the updated value for this path.
+   */
+  function setContext(path, setter) {
+    if (!path || typeof path !== 'string' || !path.trim().length) {
+      throw new Error(`Invalid path "${path}" passed to setContext`);
+    }
 
+    if (!setter || typeof setter !== 'function') {
+      throw new Error('Invalid setter function passed to setContext');
+    }
+
+    const targetContext = get(context, path);
+    const referenceContext = clonedeep(targetContext);
+
+    const updatedContext = setter(referenceContext);
+    set(context, path, updatedContext);
+
+    const diff = deepdiff(referenceContext, updatedContext);
+
+    const previousLevels = path.split('.').reduce((acc, level, index, parts) => [
+      ...acc,
+      parts.slice(0, index + 1).join('.').replace(/\.$/, ''),
+    ], []).filter((level) => !!level);
+
+    const updatedLevels = diff
+      .filter(({ path: nestedPath }) => !!nestedPath)
+      .map(({ path: nestedPath }) => `${path}.${nestedPath.join('.')}`);
+
+    const affectedLevels = [...updatedLevels, ...previousLevels];
+
+    const signature = nanoid();
+    const updatedReferenceContext = getContext();
+
+    affectedLevels.forEach((level) =>
+      emitContextChange(level, signature, get(updatedReferenceContext, level)));
   }
 
+  /**
+   * Get the application context.
+   *
+   * @return {Object}
+   */
   function getContext() {
-    return Object.assign({}, context);
+    return clonedeep(context);
   }
 
   function addUniversal(name, handler) {
@@ -217,7 +280,7 @@ export default function core(initialState = {}) {
   }
 
   return {
-    listenForStateChange,
+    listenForContextChange,
     addSystem,
     removeSystem,
     emit: emitAction,
