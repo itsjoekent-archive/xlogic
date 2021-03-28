@@ -5,7 +5,7 @@ describe('Core', () => {
     const app = core();
 
     expect(app).toStrictEqual(expect.objectContaining({
-      listenForContextChange: expect.any(Function),
+      addContextListener: expect.any(Function),
       addSystem: expect.any(Function),
       removeSystem: expect.any(Function),
       setContext: expect.any(Function),
@@ -93,19 +93,31 @@ describe('Core', () => {
 
   it('should not add a context change listener missing a path', () => {
     const app = core();
-    expect(() => app.listenForContextChange()).toThrow();
-    expect(() => app.listenForContextChange('')).toThrow();
-    expect(() => app.listenForContextChange(false)).toThrow();
-    expect(() => app.listenForContextChange(() => {})).toThrow();
+    expect(() => app.addContextListener()).toThrow();
+    expect(() => app.addContextListener('')).toThrow();
+    expect(() => app.addContextListener(false)).toThrow();
+    expect(() => app.addContextListener(() => {})).toThrow();
   });
 
   it('should not add a context change listener missing an event handler', () => {
     const app = core();
-    expect(() => app.listenForContextChange('test')).toThrow();
-    expect(() => app.listenForContextChange('test', true)).toThrow();
+    expect(() => app.addContextListener('test')).toThrow();
+    expect(() => app.addContextListener('test', true)).toThrow();
   });
 
-  // set context error states
+  it('should not set context if missing path', () => {
+    const app = core();
+    expect(() => app.setContext()).toThrow();
+    expect(() => app.setContext('')).toThrow();
+    expect(() => app.setContext(true)).toThrow();
+    expect(() => app.setContext(() => {})).toThrow();
+  });
+
+  it('should not set context if missing setter', () => {
+    const app = core();
+    expect(() => app.setContext('test')).toThrow();
+    expect(() => app.setContext('test', true)).toThrow();
+  });
 
   it('should add a context change listener and recieve updates', () => {
     const app = core({
@@ -119,11 +131,11 @@ describe('Core', () => {
     const heyListener = jest.fn();
     const fooListener = jest.fn();
 
-    app.listenForContextChange('one', levelOneListener);
-    app.listenForContextChange('one.hey', heyListener);
-    app.listenForContextChange('one.two', levelTwoListener);
-    app.listenForContextChange('one.two.three', levelThreeListener);
-    app.listenForContextChange('foo', fooListener);
+    app.addContextListener('one', levelOneListener);
+    app.addContextListener('one.hey', heyListener);
+    app.addContextListener('one.two', levelTwoListener);
+    app.addContextListener('one.two.three', levelThreeListener);
+    app.addContextListener('foo', fooListener);
 
     app.setContext('one', (context) => ({
       ...context,
@@ -205,7 +217,69 @@ describe('Core', () => {
     expect(fooListener.mock.calls.length).toBe(0);
   });
 
-  // deep nested check
+  it('should return null to the context listener if the parent object is nullified', () => {
+    const app = core({ test: { hi: 'xLogic' } });
+    const listener = jest.fn();
+    app.addContextListener('test.hi', listener);
+    app.setContext('test', () => null);
+    expect(listener.mock.calls[0][1]).toBeNull();
+  });
 
-  // remove state listener
+  it('should return undefined to the context listener if the parent object is set to a different type', () => {
+    const app = core({ test: { hi: 'xLogic' } });
+    const listener = jest.fn();
+    app.addContextListener('test.hi', listener);
+    app.setContext('test', () => 1);
+    expect(listener.mock.calls[0][1]).toBeUndefined();
+  });
+
+  it('should work for deeply nested objects', () => {
+    const app = core({ a: { b: { c: { d: { e: { hello: 'xLogic' } } } } } });
+    const listener = jest.fn();
+    app.addContextListener('a.b.c.d.e.hello', listener);
+
+    app.setContext('a.b.c.d.e.hello', () => 'xLogic 2');
+    expect(listener.mock.calls[0][1]).toBe('xLogic 2');
+
+    app.setContext('a.b', () => ({
+      c: {
+        d: null,
+      },
+    }));
+
+    expect(listener.mock.calls[1][1]).toBe(null);
+  });
+
+  it('should recognize type changes at the path level', () => {
+    const app = core({ test: { hi: 'xLogic' } });
+    const listener = jest.fn();
+    app.addContextListener('test', listener);
+    app.setContext('test', () => true);
+    expect(listener.mock.calls[0][1]).toBe(true);
+  });
+
+  it('should not trigger unnecessary context events', () => {
+    const app = core({ test: { hi: 'xLogic' } });
+    const listener = jest.fn();
+
+    const listenerId = app.addContextListener('test', listener);
+    app.setContext('test', () => true);
+    expect(listener.mock.calls.length).toBe(1);
+
+    app.setContext('test', () => true);
+    expect(listener.mock.calls.length).toBe(1);
+  });
+
+  it('should remove a context listener', () => {
+    const app = core({ test: { hi: 'xLogic' } });
+    const listener = jest.fn();
+
+    const listenerId = app.addContextListener('test', listener);
+    app.setContext('test', () => true);
+    expect(listener.mock.calls.length).toBe(1);
+
+    app.removeContextListener('test', listenerId);
+    app.setContext('test', () => false);
+    expect(listener.mock.calls.length).toBe(1);
+  });
 });

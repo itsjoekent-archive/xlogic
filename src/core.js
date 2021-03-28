@@ -24,34 +24,6 @@ export default function core(initialState = {}) {
   const actionsEventEmitter = new EventEmitter();
 
   /**
-   * ## Internal library function ##
-   * -----------------------
-   *
-   * Subscribe to context updates.
-   *
-   * `path` is a dot-notation string that represents the portion
-   * of the context that if changed, should triger the event listener.
-   *
-   * Listener is called with two parameters,
-   *  value<any>, signature<String>
-   *
-   * `value` is the updated value at this context path.
-   * `signature` is a unique id representing this context update.
-   * Given that multiple events can fire for the same context change,
-   * the signature allows subscribers to avoid unnecessary work.
-   *
-   * This function returns a unique id for this listener that can
-   * be used later to unsubscribe from context updates.
-   *
-   * @param {String} path
-   * @param {Function} listener
-   * @return {String}
-   */
-  function listenForContextChange(path, listener) {
-    return contextEventEmitter.addListener(path, listener);
-  }
-
-  /**
   * ## Internal library function ##
   * -----------------------
   *
@@ -79,6 +51,44 @@ export default function core(initialState = {}) {
       case 'actions': actionsEventEmitter.removeListener(name, id); return;
       default: console.warn(`Invalid removeListener() type argument, "${type}"`); return;
     }
+  }
+
+  /**
+   * ## Internal library function ##
+   * -----------------------
+   *
+   * Subscribe to context updates.
+   *
+   * `path` is a dot-notation string that represents the portion
+   * of the context that if changed, should triger the event listener.
+   *
+   * Listener is called with two parameters,
+   *  value<any>, signature<String>
+   *
+   * `value` is the updated value at this context path.
+   * `signature` is a unique id representing this context update.
+   * Given that multiple events can fire for the same context change,
+   * the signature allows subscribers to avoid unnecessary work.
+   *
+   * This function returns a unique id for this listener that can
+   * be used later to unsubscribe from context updates.
+   *
+   * @param {String} path
+   * @param {Function} listener
+   * @return {String}
+   */
+  function addContextListener(path, listener) {
+    return contextEventEmitter.addListener(path, listener);
+  }
+
+  /**
+   * Remove a context listener.
+   *
+   * @param {String} path Context path
+   * @param {String} id Listener ID
+   */
+  function removeContextListener(path, id) {
+    removeListener('context', path, id);
   }
 
   /**
@@ -240,6 +250,10 @@ export default function core(initialState = {}) {
 
     const diff = deepdiff(referenceContext, updatedContext);
 
+    if (!diff || !diff.length) {
+      return;
+    }
+
     const previousLevels = path.split('.').reduce((acc, level, index, parts) => [
       ...acc,
       parts.slice(0, index + 1).join('.').replace(/\.$/, ''),
@@ -249,7 +263,19 @@ export default function core(initialState = {}) {
       .filter(({ path: nestedPath }) => !!nestedPath)
       .map(({ path: nestedPath }) => `${path}.${nestedPath.join('.')}`);
 
-    const affectedLevels = [...updatedLevels, ...previousLevels];
+    let affectedLevels = [...updatedLevels, ...previousLevels]
+      .filter((level) => contextEventEmitter.hasListeners(level));
+
+    if (
+      typeof diff[0].lhs === 'object'
+      && (typeof diff[0].rhs !== 'object' || diff[0].rhs === null)
+    ) {
+      affectedLevels = affectedLevels.concat(
+        contextEventEmitter.activeEvents.filter((eventPath) =>
+          eventPath.includes(path) && !affectedLevels.includes(eventPath)
+        )
+      );
+    }
 
     const signature = nanoid();
     const updatedReferenceContext = getContext();
@@ -280,7 +306,8 @@ export default function core(initialState = {}) {
   }
 
   return {
-    listenForContextChange,
+    addContextListener,
+    removeContextListener,
     addSystem,
     removeSystem,
     emit: emitAction,

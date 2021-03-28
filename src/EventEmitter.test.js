@@ -8,6 +8,7 @@ describe('EventEmitter', () => {
       addListener: expect.any(Function),
       removeListener: expect.any(Function),
       emit: expect.any(Function),
+      activeEvents: expect.any(Array),
     }));
   });
 
@@ -90,5 +91,20 @@ describe('EventEmitter', () => {
     emitter.removeListener('test', id);
     emitter.emit('test');
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('Does not check for listeners if missing name', () => {
+    const emitter = new EventEmitter();
+    expect(() => emitter.hasListeners('')).toThrow();
+    expect(() => emitter.hasListeners(true)).toThrow();
+    expect(() => emitter.hasListeners()).toThrow();
+  });
+
+  it('Checks if the event has listeners', () => {
+    const emitter = new EventEmitter();
+    expect(emitter.hasListeners('test')).toBe(false);
+    emitter.addListener('test', () => {});
+    expect(emitter.hasListeners('test')).toBe(true);
+    expect(emitter.activeEvents).toStrictEqual(['test']);
   });
 });

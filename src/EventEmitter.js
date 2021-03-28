@@ -9,12 +9,14 @@ import { nanoid } from 'nanoid';
  */
 export default function EventEmitter() {
   const listeners = {};
+  const activeEvents = [];
 
   /**
    * Add an event listener function.
    *
    * @param {String} name Event name
    * @param {Function} listener Event handler
+   * @return {String}
    */
   function addListener(name, listener) {
     if (!name || typeof name !== 'string') {
@@ -31,6 +33,10 @@ export default function EventEmitter() {
 
     const id = nanoid();
     listeners[name][id] = listener;
+
+    if (!activeEvents.includes(name)) {
+      activeEvents.push(name);
+    }
 
     return id;
   }
@@ -52,6 +58,24 @@ export default function EventEmitter() {
 
     listeners[name][id] = null;
     delete listeners[name][id];
+
+    if (!hasListeners(name) && activeEvents.includes(name)) {
+      activeEvents.splice(activeEvents.indexOf(name), 1);
+    }
+  }
+
+  /**
+   * Check if the given event has 1 or more listeners.
+   *
+   * @param {String} name Event name
+   * @return {Boolean}
+   */
+  function hasListeners(name) {
+    if (!name || typeof name !== 'string') {
+      throw new Error('Missing listener name');
+    }
+
+    return activeEvents.includes(name);
   }
 
   /**
@@ -75,6 +99,8 @@ export default function EventEmitter() {
   return {
     addListener,
     removeListener,
+    hasListeners,
     emit,
+    activeEvents,
   }
 }
