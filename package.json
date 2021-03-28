@@ -2,59 +2,42 @@
   "name": "xlogic",
   "version": "1.0.0",
   "description": "Keep the logic out of your React components",
-  "author": "itsjoekent",
-  "license": "MIT",
-  "repository": "itsjoekent/xlogic",
-  "main": "dist/index.js",
-  "module": "dist/index.modern.js",
-  "source": "src/index.js",
-  "engines": {
-    "node": ">=10"
-  },
+  "main": "",
   "scripts": {
-    "build": "microbundle-crl --no-compress --format modern,cjs",
-    "start": "microbundle-crl watch --no-compress --format modern,cjs",
-    "prepare": "run-s build",
-    "test": "run-s test:unit test:lint test:build",
-    "test:build": "run-s build",
-    "test:lint": "eslint .",
-    "test:unit": "cross-env CI=1 react-scripts test --env=jsdom",
-    "test:watch": "react-scripts test --env=jsdom",
-    "predeploy": "cd example && npm install && npm run build",
-    "deploy": "gh-pages -d example/build"
+    "build": "webpack --mode production",
+    "test": "jest"
   },
-  "peerDependencies": {
-    "react": "^16.0.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itsjoekent/xlogic.git"
   },
+  "author": "Joe Kent",
+  "license": "MIT",
+  "publishConfig": {
+    "public": true
+  },
+  "bugs": {
+    "url": "https://github.com/itsjoekent/xlogic/issues"
+  },
+  "homepage": "https://github.com/itsjoekent/xlogic#readme",
   "devDependencies": {
-    "babel-eslint": "^10.0.3",
-    "cross-env": "^7.0.2",
-    "eslint": "^7.22.0",
-    "eslint-config-prettier": "^6.7.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-config-standard-react": "^9.2.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-node": "^11.0.0",
-    "eslint-plugin-prettier": "^3.1.1",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-react": "^7.17.0",
-    "eslint-plugin-standard": "^4.0.1",
-    "gh-pages": "^2.2.0",
-    "microbundle-crl": "^0.13.10",
-    "npm-run-all": "^4.1.5",
-    "prettier": "^2.0.4",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-scripts": "^4.0.3"
+    "@babel/core": "^7.13.13",
+    "@babel/preset-env": "^7.13.12",
+    "@babel/preset-react": "^7.13.13",
+    "babel-jest": "^26.6.3",
+    "babel-loader": "^8.2.2",
+    "clean-webpack-plugin": "^3.0.0",
+    "jest": "^26.6.3",
+    "webpack": "^5.28.0",
+    "webpack-cli": "^4.6.0",
+    "webpack-node-externals": "^2.5.2"
   },
-  "files": [
-    "dist"
-  ],
   "dependencies": {
     "clone-deep": "^4.0.1",
     "deep-diff": "^1.0.2",
-    "get-value": "^2.0.6",
+    "get-value": "^3.0.1",
     "nanoid": "^3.1.22",
-    "set-value": "^2.0.1"
+    "react": "^17.0.2",
+    "set-value": "^3.0.2"
   }
 }

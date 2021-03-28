@@ -217,12 +217,12 @@ describe('Core', () => {
     expect(fooListener.mock.calls.length).toBe(0);
   });
 
-  it('should return null to the context listener if the parent object is nullified', () => {
+  it('should return undefined to the context listener if the parent object is nullified', () => {
     const app = core({ test: { hi: 'xLogic' } });
     const listener = jest.fn();
     app.addContextListener('test.hi', listener);
     app.setContext('test', () => null);
-    expect(listener.mock.calls[0][1]).toBeNull();
+    expect(listener.mock.calls[0][1]).toBeUndefined();
   });
 
   it('should return undefined to the context listener if the parent object is set to a different type', () => {
@@ -247,7 +247,7 @@ describe('Core', () => {
       },
     }));
 
-    expect(listener.mock.calls[1][1]).toBe(null);
+    expect(listener.mock.calls[1][1]).toBeUndefined();
   });
 
   it('should recognize type changes at the path level', () => {
