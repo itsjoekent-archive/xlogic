@@ -1,5 +1,4 @@
 import React from 'react';
-import LRU from 'lru-cache';
 import clonedeep from 'clone-deep';
 import set from 'set-value';
 import CoreContext from './CoreContext';
@@ -10,16 +9,9 @@ export function useCore({
 }) {
   const core = React.useContext(CoreContext);
   const [localState, setLocalState] = React.useState({});
-  const signatureCache = React.useRef(new LRU({ max: 50, maxAge: 1000 * 10 }));
 
   function onContextUpdateGenerator(path) {
-    function onContextUpdate(signature, value) {
-      if (!!signatureCache.current.get(signature)) {
-        return;
-      }
-
-      signatureCache.current.set(signature, true);
-
+    function onContextUpdate(value) {
       setLocalState((state) => {
         const updatedState = clonedeep(state);
         set(updatedState, path, value);
@@ -54,10 +46,7 @@ export function useCore({
     register,
   ]);
 
-  useEffect(() => signatureCache.current.reset(), []);
-
   return {
     context: localState,
-    ...core.publicApi,
   };
 }

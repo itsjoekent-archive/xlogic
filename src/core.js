@@ -2,7 +2,6 @@ import get from 'get-value';
 import set from 'set-value';
 import deepdiff from 'deep-diff';
 import clonedeep from 'clone-deep';
-import { nanoid } from 'nanoid';
 import EventEmitter from './EventEmitter';
 
 /**
@@ -62,13 +61,7 @@ export default function core(initialState = {}) {
    * `path` is a dot-notation string that represents the portion
    * of the context that if changed, should triger the event listener.
    *
-   * Listener is called with two parameters,
-   *  value<any>, signature<String>
-   *
-   * `value` is the updated value at this context path.
-   * `signature` is a unique id representing this context update.
-   * Given that multiple events can fire for the same context change,
-   * the signature allows subscribers to avoid unnecessary work.
+   * Listener is called with the updated value at this path.
    *
    * This function returns a unique id for this listener that can
    * be used later to unsubscribe from context updates.
@@ -210,8 +203,8 @@ export default function core(initialState = {}) {
    * @param {String} path Context path
    * @param {*} value Updated context value for this path
    */
-  function emitContextChange(path, signature, value) {
-    emit('context', path, signature, value);
+  function emitContextChange(path, value) {
+    emit('context', path, value);
   }
 
   /**
@@ -277,11 +270,9 @@ export default function core(initialState = {}) {
       );
     }
 
-    const signature = nanoid();
     const updatedReferenceContext = getContext();
-
     affectedLevels.forEach((level) =>
-      emitContextChange(level, signature, get(updatedReferenceContext, level)));
+      emitContextChange(level, get(updatedReferenceContext, level)));
   }
 
   /**

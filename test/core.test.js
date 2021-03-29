@@ -146,7 +146,7 @@ describe('Core', () => {
     }));
 
     expect(levelOneListener.mock.calls.length).toBe(1);
-    expect(levelOneListener.mock.calls[0][1]).toStrictEqual({
+    expect(levelOneListener.mock.calls[0][0]).toStrictEqual({
       hey: 'xLogic',
       two: {
         test: [true],
@@ -154,15 +154,12 @@ describe('Core', () => {
     });
 
     expect(heyListener.mock.calls.length).toBe(1);
-    expect(heyListener.mock.calls[0][1]).toEqual('xLogic');
+    expect(heyListener.mock.calls[0][0]).toEqual('xLogic');
 
     expect(levelTwoListener.mock.calls.length).toBe(1);
-    expect(levelTwoListener.mock.calls[0][1]).toStrictEqual({
+    expect(levelTwoListener.mock.calls[0][0]).toStrictEqual({
       test: [true],
     });
-
-    expect(levelOneListener.mock.calls[0][0])
-      .toEqual(levelTwoListener.mock.calls[0][0]);
 
     expect(levelThreeListener.mock.calls.length).toBe(0);
     expect(fooListener.mock.calls.length).toBe(0);
@@ -173,7 +170,7 @@ describe('Core', () => {
     }));
 
     expect(levelOneListener.mock.calls.length).toBe(2);
-    expect(levelOneListener.mock.calls[1][1]).toStrictEqual({
+    expect(levelOneListener.mock.calls[1][0]).toStrictEqual({
       hey: 'xLogic 2',
       two: {
         test: [true],
@@ -181,7 +178,7 @@ describe('Core', () => {
     });
 
     expect(heyListener.mock.calls.length).toBe(2);
-    expect(heyListener.mock.calls[1][1]).toEqual('xLogic 2');
+    expect(heyListener.mock.calls[1][0]).toEqual('xLogic 2');
 
     expect(levelTwoListener.mock.calls.length).toBe(1);
     expect(levelThreeListener.mock.calls.length).toBe(0);
@@ -190,7 +187,7 @@ describe('Core', () => {
     app.setContext('one.two.three', () => 3);
 
     expect(levelOneListener.mock.calls.length).toBe(3);
-    expect(levelOneListener.mock.calls[2][1]).toStrictEqual({
+    expect(levelOneListener.mock.calls[2][0]).toStrictEqual({
       hey: 'xLogic 2',
       two: {
         test: [true],
@@ -199,19 +196,13 @@ describe('Core', () => {
     });
 
     expect(levelTwoListener.mock.calls.length).toBe(2);
-    expect(levelTwoListener.mock.calls[1][1]).toStrictEqual({
+    expect(levelTwoListener.mock.calls[1][0]).toStrictEqual({
       test: [true],
       three: 3,
     });
 
-    expect(levelOneListener.mock.calls[1][0])
-      .not.toEqual(levelTwoListener.mock.calls[1][0]);
-
-    expect(levelOneListener.mock.calls[2][0])
-      .toEqual(levelTwoListener.mock.calls[1][0]);
-
     expect(levelThreeListener.mock.calls.length).toBe(1);
-    expect(levelThreeListener.mock.calls[0][1]).toEqual(3);
+    expect(levelThreeListener.mock.calls[0][0]).toEqual(3);
 
     expect(heyListener.mock.calls.length).toBe(2);
     expect(fooListener.mock.calls.length).toBe(0);
@@ -222,7 +213,7 @@ describe('Core', () => {
     const listener = jest.fn();
     app.addContextListener('test.hi', listener);
     app.setContext('test', () => null);
-    expect(listener.mock.calls[0][1]).toBeUndefined();
+    expect(listener.mock.calls[0][0]).toBeUndefined();
   });
 
   it('should return undefined to the context listener if the parent object is set to a different type', () => {
@@ -230,7 +221,7 @@ describe('Core', () => {
     const listener = jest.fn();
     app.addContextListener('test.hi', listener);
     app.setContext('test', () => 1);
-    expect(listener.mock.calls[0][1]).toBeUndefined();
+    expect(listener.mock.calls[0][0]).toBeUndefined();
   });
 
   it('should work for deeply nested objects', () => {
@@ -239,7 +230,7 @@ describe('Core', () => {
     app.addContextListener('a.b.c.d.e.hello', listener);
 
     app.setContext('a.b.c.d.e.hello', () => 'xLogic 2');
-    expect(listener.mock.calls[0][1]).toBe('xLogic 2');
+    expect(listener.mock.calls[0][0]).toBe('xLogic 2');
 
     app.setContext('a.b', () => ({
       c: {
@@ -255,7 +246,7 @@ describe('Core', () => {
     const listener = jest.fn();
     app.addContextListener('test', listener);
     app.setContext('test', () => true);
-    expect(listener.mock.calls[0][1]).toBe(true);
+    expect(listener.mock.calls[0][0]).toBe(true);
   });
 
   it('should not trigger unnecessary context events', () => {

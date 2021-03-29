@@ -36,7 +36,6 @@
     "clone-deep": "^4.0.1",
     "deep-diff": "^1.0.2",
     "get-value": "^3.0.1",
-    "lru-cache": "^6.0.0",
     "nanoid": "^3.1.22",
     "react": "^17.0.2",
     "set-value": "^3.0.2"
