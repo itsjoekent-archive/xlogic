@@ -1,4 +1,4 @@
-import core from './core';
+import core from '../src/core';
 
 describe('Core', () => {
   it('should initialize the core with no default state', () => {

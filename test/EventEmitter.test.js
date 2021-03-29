@@ -1,4 +1,4 @@
-import EventEmitter from './EventEmitter';
+import EventEmitter from '../src/EventEmitter';
 
 describe('EventEmitter', () => {
   it('Creates a new event machine', () => {
