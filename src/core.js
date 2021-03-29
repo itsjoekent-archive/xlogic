@@ -297,6 +297,7 @@ export default function core(initialState = {}) {
   }
 
   return {
+    __xLogicCore: true,
     addContextListener,
     removeContextListener,
     addSystem,
