@@ -1,14 +1,24 @@
 import React from 'react';
 import clonedeep from 'clone-deep';
+import get from 'get-value';
 import set from 'set-value';
 import CoreContext from './CoreContext';
 
-export function useCore({
+export default function useCore({
   bind,
   register,
 }) {
   const core = React.useContext(CoreContext);
-  const [localState, setLocalState] = React.useState({});
+
+  function getInitialLocalState() {
+    const initialContext = core.getContext();
+    const initialLocalState = {};
+
+    bind.forEach((path) => set(initialLocalState, path, get(initialContext, path)));
+    return initialLocalState;
+  }
+
+  const [localState, setLocalState] = React.useState(getInitialLocalState());
 
   function onContextUpdateGenerator(path) {
     function onContextUpdate(value) {
@@ -19,26 +29,30 @@ export function useCore({
         return updatedState;
       });
     }
+
+    return onContextUpdate;
   }
 
-  useEffect(() => {
-    const hasBinds = Array.isArray(bind) && !!bind.length;
+  React.useEffect(() => {
+    const hasContextBinds = Array.isArray(bind) && !!bind.length;
 
-    if (hasBinds) {
+    if (hasContextBinds) {
       const listeners = bind.map((path) => (
-        core.addContextListener(path, onContextUpdateGenerator(path)
+        core.addContextListener(path, onContextUpdateGenerator(path))
       ));
 
-      return () => listeners.forEach((id) => core.removeListener('state', id));
+      setLocalState(getInitialLocalState());
+
+      return () => listeners.forEach((id, index) => core.removeContextListener(bind[index], id));
     }
   }, [
     bind,
   ]);
 
-  useEffect(() => {
-    const hasRegisters = Array.isArray(register) && !!register.length;
+  React.useEffect(() => {
+    const hasSystemRegisters = Array.isArray(register) && !!register.length;
 
-    if (hasRegisters) {
+    if (hasSystemRegisters) {
       const systems = register.map((system) => core.addSystem(system));
       return () => systems.forEach((systemId) => core.removeSystem(systemId));
     }
